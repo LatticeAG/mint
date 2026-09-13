@@ -1,0 +1,32 @@
+# Spec/review/working documents (coordinator-managed, never committed)
+SPEC*
+*EXTREME*
+PROMPT*
+REVIEW*
+FIX_PROMPT*
+SELFREVIEW*
+DRAFT*
+REPORT*
+INTERFACES*
+STATUS*
+BUILD_PROMPT*
+
+# Python build artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# Node (if any tooling appears)
+node_modules/
+
+# Local runtime artifacts
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+mint-fixture/
+.pytest_cache/
+.coverage
