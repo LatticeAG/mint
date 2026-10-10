@@ -55,27 +55,72 @@ HKDF-SHA256, ChaCha20-Poly1305).
 
 ## Quick start (simulation fixture)
 
+`fixture export` writes the deterministic `clean-100` fixture — `mint.toml`,
+`trust.json`, `keys.json`, `artifacts/`, the signed request bodies
+(`task-post.json`, `bid.json`, `judgment.json`, `case-*.json`) and
+`simulation.json`. `--config` is a required argument *of each subcommand*
+(`mint task post --config …`), not a global flag; `--json` is global-only
+and goes before the command name (`mint --json task get …`).
+
 ```sh
 mint fixture export --name clean-100 --directory ./mint-fixture
-mint fixture bootstrap --directory ./mint-fixture
 mint config validate --file ./mint-fixture/mint.toml
-
-# local engine: every command produces a real signed request and a real receipt
-mint --config ./mint-fixture/mint.toml task post \
-    --file ./mint-fixture/task-post.json --key-id poster-test
-mint --config ./mint-fixture/mint.toml task fund \
-    --task t1 --expected-version 1 --key-id poster-test --json
-
-# ... bid commit/reveal, claim, submit, evaluation, settlement ...
-mint log export --checkpoint cp-64 --out ./mint-fixture/log.jsonl
-mint verify --log ./mint-fixture/log.jsonl --trust ./mint-fixture/trust.json \
-    --artifacts ./mint-fixture/artifacts --strict
-mint simulate --config ./mint-fixture/simulation.json --seed 42 --out run-42
 ```
 
-`mint serve` runs the single-market sequencer over plain HTTP on the configured
-listen address, exposing `POST /v1/commands` and the nine read routes. It is a
-**simulation** transport; production deployment is a stub.
+One-shot: `simulate` runs the whole clean-100 scenario in memory (post →
+fund → auction → claim → submit → escrow → evaluation → settle) and writes
+a verifiable public log; `verify` is fully offline and takes no `--config`:
+
+```sh
+mint simulate --config ./mint-fixture/simulation.json --seed 42 --out run-42
+mint verify --log run-42/log.jsonl --trust ./mint-fixture/trust.json \
+    --artifacts run-42/artifacts --strict
+# -> {"valid":true,"scope":"FULL_PUBLIC",...}
+```
+
+Interactive engine: `market init` creates the `mint.sqlite` store, but
+commands still fail `unknown actor` until the fixture roster is enrolled —
+there is no `fixture bootstrap` subcommand; bootstrapping is the
+`mint.scenario.bootstrap` helper:
+
+```sh
+mint market init --config ./mint-fixture/mint.toml
+
+python - <<'PY'
+# enroll actors + fund accounts (what a bootstrap step would do)
+from mint.config import load_config
+from mint.engine import Engine
+from mint.scenario import bootstrap
+from mint.sim import Keystore, Sim
+from mint.store import Store
+from mint.trust import load_trust
+
+cfg = load_config("mint-fixture/mint.toml")
+trust = load_trust(cfg.base_dir / cfg.trust_file)
+eng = Engine(Store(cfg.base_dir / "mint.sqlite"), cfg, trust)
+bootstrap(Sim(eng, Keystore(cfg.base_dir / "keys.json"), "clean-100"))
+PY
+
+# local engine: every command produces a real signed request and a real receipt
+mint task post --file ./mint-fixture/task-post.json --key-id poster-test \
+    --config ./mint-fixture/mint.toml
+mint --json task fund --task t1 --expected-version 1 --key-id poster-test \
+    --config ./mint-fixture/mint.toml
+
+# ... bid commit/reveal, claim, submit, evaluation, settlement ...
+# export the log AND the artifact set — verify fails
+# PRIVATE_EVIDENCE_UNAVAILABLE while referenced artifacts are missing.
+mint log export --out ./mint-fixture/log.jsonl --config ./mint-fixture/mint.toml
+mint artifacts export --dir ./mint-fixture/artifacts \
+    --config ./mint-fixture/mint.toml
+mint verify --log ./mint-fixture/log.jsonl --trust ./mint-fixture/trust.json \
+    --artifacts ./mint-fixture/artifacts --strict
+```
+
+`mint serve --config ./mint-fixture/mint.toml` runs the single-market
+sequencer over plain HTTP on the configured listen address, exposing
+`POST /v1/commands` and the nine read routes. It is a **simulation**
+transport; production deployment is a stub.
 
 ## Layout
 
