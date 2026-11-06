@@ -30,5 +30,6 @@ mint = ["py.typed"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["src"]
 addopts = "-q"
 markers = ["slow: full-lifecycle simulation tests"]
