@@ -30,5 +30,7 @@ mint = ["py.typed"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# src/ layout: `python -m pytest` must work from a fresh clone without a prior install
+pythonpath = ["src"]
 addopts = "-q"
 markers = ["slow: full-lifecycle simulation tests"]

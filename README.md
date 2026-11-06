@@ -50,6 +50,15 @@ reason — see `src/mint/stubs.py`.
 pip install -e .
 ```
 
+If a user installation puts `mint` outside your `PATH`, add the Python user
+scripts directory before running the examples:
+
+```sh
+export PATH="$(python3 -m site --user-base)/bin:$PATH"
+```
+
+Alternatively, use `python3 -m mint` in place of `mint` in the commands below.
+
 Python ≥3.11. The only runtime dependency is `cryptography` (Ed25519, X25519,
 HKDF-SHA256, ChaCha20-Poly1305).
 
@@ -57,21 +66,14 @@ HKDF-SHA256, ChaCha20-Poly1305).
 
 ```sh
 mint fixture export --name clean-100 --directory ./mint-fixture
-mint fixture bootstrap --directory ./mint-fixture
 mint config validate --file ./mint-fixture/mint.toml
-
-# local engine: every command produces a real signed request and a real receipt
-mint --config ./mint-fixture/mint.toml task post \
-    --file ./mint-fixture/task-post.json --key-id poster-test
-mint --config ./mint-fixture/mint.toml task fund \
-    --task t1 --expected-version 1 --key-id poster-test --json
-
-# ... bid commit/reveal, claim, submit, evaluation, settlement ...
-mint log export --checkpoint cp-64 --out ./mint-fixture/log.jsonl
-mint verify --log ./mint-fixture/log.jsonl --trust ./mint-fixture/trust.json \
-    --artifacts ./mint-fixture/artifacts --strict
 mint simulate --config ./mint-fixture/simulation.json --seed 42 --out run-42
+mint verify --log run-42/log.jsonl --trust ./mint-fixture/trust.json \
+    --artifacts run-42/artifacts --strict
 ```
+
+The simulation bootstraps the fixture roster and runs the scenario through
+settlement, writing its log and artifacts to `run-42`.
 
 `mint serve` runs the single-market sequencer over plain HTTP on the configured
 listen address, exposing `POST /v1/commands` and the nine read routes. It is a
@@ -98,6 +100,10 @@ listen address, exposing `POST /v1/commands` and the nine read routes. It is a
 ```sh
 python -m pytest
 ```
+
+The tests import `mint` from `src/`. `pyproject.toml` sets `pythonpath = ["src"]`
+for pytest, so this runs on a fresh clone with no install step; `pip install -e .`
+still works unchanged.
 
 The suite encodes every named conformance vector from the specification as an
 executable test against the real engine — no skipped vectors, no approximate
