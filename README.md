@@ -57,21 +57,14 @@ HKDF-SHA256, ChaCha20-Poly1305).
 
 ```sh
 mint fixture export --name clean-100 --directory ./mint-fixture
-mint fixture bootstrap --directory ./mint-fixture
 mint config validate --file ./mint-fixture/mint.toml
-
-# local engine: every command produces a real signed request and a real receipt
-mint --config ./mint-fixture/mint.toml task post \
-    --file ./mint-fixture/task-post.json --key-id poster-test
-mint --config ./mint-fixture/mint.toml task fund \
-    --task t1 --expected-version 1 --key-id poster-test --json
-
-# ... bid commit/reveal, claim, submit, evaluation, settlement ...
-mint log export --checkpoint cp-64 --out ./mint-fixture/log.jsonl
-mint verify --log ./mint-fixture/log.jsonl --trust ./mint-fixture/trust.json \
-    --artifacts ./mint-fixture/artifacts --strict
 mint simulate --config ./mint-fixture/simulation.json --seed 42 --out run-42
+mint verify --log run-42/log.jsonl --trust ./mint-fixture/trust.json \
+    --artifacts run-42/artifacts --strict
 ```
+
+The simulation bootstraps the fixture roster and runs the scenario through
+settlement, writing its log and artifacts to `run-42`.
 
 `mint serve` runs the single-market sequencer over plain HTTP on the configured
 listen address, exposing `POST /v1/commands` and the nine read routes. It is a
