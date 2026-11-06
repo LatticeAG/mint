@@ -50,6 +50,15 @@ reason — see `src/mint/stubs.py`.
 pip install -e .
 ```
 
+If a user installation puts `mint` outside your `PATH`, add the Python user
+scripts directory before running the examples:
+
+```sh
+export PATH="$(python3 -m site --user-base)/bin:$PATH"
+```
+
+Alternatively, use `python3 -m mint` in place of `mint` in the commands below.
+
 Python ≥3.11. The only runtime dependency is `cryptography` (Ed25519, X25519,
 HKDF-SHA256, ChaCha20-Poly1305).
 
