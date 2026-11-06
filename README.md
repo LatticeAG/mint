@@ -101,6 +101,10 @@ listen address, exposing `POST /v1/commands` and the nine read routes. It is a
 python -m pytest
 ```
 
+The tests import `mint` from `src/`. `pyproject.toml` sets `pythonpath = ["src"]`
+for pytest, so this runs on a fresh clone with no install step; `pip install -e .`
+still works unchanged.
+
 The suite encodes every named conformance vector from the specification as an
 executable test against the real engine — no skipped vectors, no approximate
 money comparisons.
